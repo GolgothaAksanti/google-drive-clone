@@ -18,3 +18,9 @@ export type FileItem = {
   folderId: string | null;
   createdAt: Timestamp;
 };
+export type UploadStatus =
+  | "idle"
+  | "uploading"
+  | "saving"
+  | "success"
+  | "error";
