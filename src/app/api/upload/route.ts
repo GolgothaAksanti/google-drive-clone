@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import cloudinary from "@/lib/cloudinary";
-import { db } from "@/lib/firebase";
 import { addDoc, collection, Timestamp } from "firebase/firestore";
+
+import { db } from "@/lib/firebase";
+import cloudinary from "@/lib/cloudinary";
 import { getTokenFromHeaders } from "@/utils/get-token";
 import { verifyFirebaseToken } from "@/lib/verify-firebase-token";
 import type { UploadApiResponse } from "cloudinary";
 
-export async function POST(req: NextRequest) {
+export const POST = async (req: NextRequest) => {
   const form = await req.formData();
   const file = form.get("file") as File;
   const folderId = form.get("folderId") as string;
@@ -16,6 +17,8 @@ export async function POST(req: NextRequest) {
 
   const token = getTokenFromHeaders(req.headers);
   const userId = await verifyFirebaseToken(token!);
+
+  console.dir({ token, userId, folderId });
 
   const uploaded = await new Promise<UploadApiResponse>((resolve, reject) => {
     cloudinary.uploader
@@ -42,4 +45,4 @@ export async function POST(req: NextRequest) {
   await addDoc(collection(db, "files"), fileDoc);
 
   return NextResponse.json({ success: true });
-}
+};

@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { Check, FileUp, FolderPlus, FolderUp, Plus } from "lucide-react";
+import { useAtomValue, useSetAtom } from "jotai";
 
 import {
   DropdownMenu,
@@ -14,8 +15,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-// import { createFolder } from "@/services/create-folder";
-import { useAtomValue, useSetAtom } from "jotai";
 import { CreateFolderModalStore } from "@/stores/modal-stores";
 import { CurrentFolderStore } from "@/stores/folder-stores";
 import { auth } from "@/lib/firebase";
@@ -49,20 +48,23 @@ export const NewButton = () => {
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    // if (index !== 1) return;
     const file = e.target.files?.[0];
     if (!file) return;
 
     const token = await user?.getIdToken();
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("folderId", currentFolder || "");
+    formData.append("folderId", "RYoaA4u5kIGNkAhHYpEb");
 
-    await fetch("/api/upload", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
-      body: formData,
-    });
+    try {
+      await fetch("/api/upload", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+    } catch (error) {
+      console.dir(error);
+    }
   };
 
   return (
@@ -99,7 +101,8 @@ export const NewButton = () => {
             <input
               ref={fileInputRef}
               type="file"
-              hidden
+              // hidden
+
               onChange={handleFileUpload}
             />
           </DropdownMenuContent>

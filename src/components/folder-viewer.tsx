@@ -9,7 +9,9 @@ export const FolderViewer = ({ rootFolderId = null }) => {
   const [currentFolder, setCurrentFolder] = useState<string | null>(
     rootFolderId
   );
-  const { folders, files } = useFolderContents(currentFolder);
+  const { folders, loading, files } = useFolderContents(currentFolder);
+
+  if (loading) return <p>loading...</p>;
 
   return (
     <div className="p-4">

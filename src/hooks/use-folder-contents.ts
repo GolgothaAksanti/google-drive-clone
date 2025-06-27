@@ -1,41 +1,60 @@
 import { useEffect, useState } from "react";
 import { auth, db } from "@/lib/firebase";
-import { collection, query, where, getDocs } from "firebase/firestore";
+import {
+  collection,
+  query,
+  where,
+  orderBy,
+  onSnapshot,
+} from "firebase/firestore";
 import type { Folder, FileItem } from "@/types/folder";
 
 export const useFolderContents = (folderId: string | null) => {
   const [folders, setFolders] = useState<Folder[]>([]);
   const [files, setFiles] = useState<FileItem[]>([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const fetchData = async () => {
-      const user = auth.currentUser;
-      if (!user) return;
+    const user = auth.currentUser;
+    if (!user) return;
 
-      const foldersQ = query(
-        collection(db, "folders"),
-        where("ownerId", "==", user.uid),
-        where("parentId", "==", folderId ?? null)
-      );
-      const foldersSnap = await getDocs(foldersQ);
-      console.dir(foldersSnap);
-      setFolders(
-        foldersSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Folder))
-      );
+    const foldersQ = query(
+      collection(db, "folders"),
+      where("ownerId", "==", user.uid),
+      where("parentId", "==", folderId ?? null)
+      // orderBy("createdAt", "desc")
+    );
 
-      const filesQ = query(
-        collection(db, "files"),
-        where("ownerId", "==", user.uid),
-        where("folderId", "==", folderId)
-      );
-      const filesSnap = await getDocs(filesQ);
-      setFiles(
-        filesSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() } as FileItem))
-      );
+    const unsubscribeFolders = onSnapshot(foldersQ, (snapshot) => {
+      const folderList = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as Folder[];
+      setFolders(folderList);
+      setLoading(false);
+    });
+
+    const filesQ = query(
+      collection(db, "files"),
+      where("ownerId", "==", user.uid),
+      where("folderId", "==", folderId ?? null)
+      // orderBy("createdAt", "desc")
+    );
+
+    const unsubscribeFiles = onSnapshot(filesQ, (snapshot) => {
+      const fileList = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as FileItem[];
+      setFiles(fileList);
+      setLoading(false);
+    });
+
+    return () => {
+      unsubscribeFolders();
+      unsubscribeFiles();
     };
+  }, [folderId, files]);
 
-    fetchData();
-  }, [folderId]);
-
-  return { folders, files };
+  return { folders, loading, files };
 };
