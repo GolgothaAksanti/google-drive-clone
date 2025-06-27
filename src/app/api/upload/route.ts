@@ -19,8 +19,6 @@ export const POST = async (req: NextRequest) => {
     const token = getTokenFromHeaders(req.headers);
     const userId = await verifyFirebaseToken(token!);
 
-    console.dir({ userId });
-
     const uploaded = await new Promise<UploadApiResponse>((resolve, reject) => {
       cloudinary.uploader
         .upload_stream(
@@ -35,8 +33,6 @@ export const POST = async (req: NextRequest) => {
         )
         .end(buffer);
     });
-
-    console.dir({ uploaded });
 
     const fileDoc = {
       name: uploaded.original_filename,

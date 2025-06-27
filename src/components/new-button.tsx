@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Check, FileUp, FolderPlus, FolderUp, Plus } from "lucide-react";
 import { useAtomValue, useSetAtom } from "jotai";
 import { toast } from "sonner";
@@ -30,6 +30,7 @@ const data = [
 export const NewButton = () => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [selectedVersion, setSelectedVersion] = useState(data[0].title);
+  const [isDragging, setIsDragging] = useState(false);
   const setOpenCreateFolder = useSetAtom(CreateFolderModalStore);
   const currentFolder = useAtomValue(CurrentFolderStore);
   const user = auth.currentUser;
@@ -42,19 +43,6 @@ export const NewButton = () => {
 
   const handleUploadFolder = (index: number) => {
     if (index !== 2) return;
-    const promise = () =>
-      new Promise((resolve) =>
-        setTimeout(() => resolve({ name: "Sonner" }), 2000)
-      );
-
-    toast.promise(promise, {
-      loading: "Loading...",
-      success: () => {
-        return `file toast has been added`;
-      },
-      error: "Error",
-    });
-    // toast("uploaded");
   };
 
   const handleOpenCreateFolder = (index: number) => {
@@ -67,27 +55,113 @@ export const NewButton = () => {
     fileInputRef.current?.click();
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    if (file) {
+      await uploadFile(file);
+    }
+    e.target.value = "";
+  };
+
+  const uploadFile = async (file: File) => {
     const token = await user?.getIdToken();
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("folderId", "RYoaA4u5kIGNkAhHYpEb");
+    formData.append("folderId", currentFolder ?? "");
 
     try {
-      await fetch("/api/upload", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData,
-      });
+      await toast.promise(
+        fetch("/api/upload", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData,
+        }).then(async (res) => {
+          const data = await res.json();
 
-      // fileInputRef.current = null;
+          if (data.error) {
+            throw new Error("Upload failed");
+          }
+        }),
+        {
+          loading: "Uploading file...",
+          success: "File upload successfully",
+          error: "upload failed",
+          richColors: true,
+          closeButton: true,
+        }
+      );
     } catch (error) {
       console.dir(error);
     }
   };
+
+  useEffect(() => {
+    const handleDragOver = (e: DragEvent) => {
+      e.preventDefault();
+      setIsDragging(true);
+    };
+
+    const handleDragLeave = (e: DragEvent) => {
+      e.preventDefault();
+      setIsDragging(false);
+    };
+
+    const handleDrop = async (e: DragEvent) => {
+      e.preventDefault();
+      setIsDragging(false);
+      const file = e.dataTransfer?.files?.[0];
+      if (file) {
+        await uploadFile(file);
+      }
+    };
+
+    window.addEventListener("dragover", handleDragOver);
+    window.addEventListener("dragleave", handleDragLeave);
+    window.addEventListener("drop", handleDrop);
+
+    return () => {
+      window.removeEventListener("dragover", handleDragOver);
+      window.removeEventListener("dragleave", handleDragLeave);
+      window.removeEventListener("drop", handleDrop);
+    };
+  }, []);
+
+  // const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   const file = e.target.files?.[0];
+  //   if (!file) return;
+
+  //   const token = await user?.getIdToken();
+  //   const formData = new FormData();
+  //   formData.append("file", file);
+  //   formData.append("folderId", currentFolder ?? "");
+
+  //   try {
+  //     await toast.promise(
+  //       fetch("/api/upload", {
+  //         method: "POST",
+  //         headers: { Authorization: `Bearer ${token}` },
+  //         body: formData,
+  //       }).then(async (res) => {
+  //         const data = await res.json();
+
+  //         if (data.error) {
+  //           throw new Error("Upload failed");
+  //         }
+  //       }),
+  //       {
+  //         loading: "Uploading file...",
+  //         success: "File upload successfully",
+  //         error: "upload failed",
+  //         richColors: true,
+  //         closeButton: true,
+  //       }
+  //     );
+  //   } catch (error) {
+  //     console.dir(error);
+  //   }
+  // };
 
   return (
     <SidebarMenu>
@@ -106,10 +180,9 @@ export const NewButton = () => {
           <input
             ref={fileInputRef}
             type="file"
-            // id="file-upload"
             className="h-0 w-0"
             hidden
-            onChange={handleFileUpload}
+            onChange={handleFileChange}
           />
           <DropdownMenuContent
             className="w-(--radix-dropdown-menu-trigger-width)"
