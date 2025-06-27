@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { Check, FileUp, FolderPlus, FolderUp, Plus } from "lucide-react";
 import { useAtomValue, useSetAtom } from "jotai";
+import { toast } from "sonner";
 
 import {
   DropdownMenu,
@@ -18,6 +19,7 @@ import {
 import { CreateFolderModalStore } from "@/stores/modal-stores";
 import { CurrentFolderStore } from "@/stores/folder-stores";
 import { auth } from "@/lib/firebase";
+import { Label } from "./ui/label";
 
 const data = [
   { title: "New folder", icon: FolderPlus },
@@ -35,6 +37,24 @@ export const NewButton = () => {
   const handleOnclick = (index: number) => {
     handleOpenCreateFolder(index);
     handleOpenUploadFile(index);
+    handleUploadFolder(index);
+  };
+
+  const handleUploadFolder = (index: number) => {
+    if (index !== 2) return;
+    const promise = () =>
+      new Promise((resolve) =>
+        setTimeout(() => resolve({ name: "Sonner" }), 2000)
+      );
+
+    toast.promise(promise, {
+      loading: "Loading...",
+      success: () => {
+        return `file toast has been added`;
+      },
+      error: "Error",
+    });
+    // toast("uploaded");
   };
 
   const handleOpenCreateFolder = (index: number) => {
@@ -62,6 +82,8 @@ export const NewButton = () => {
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
       });
+
+      // fileInputRef.current = null;
     } catch (error) {
       console.dir(error);
     }
@@ -81,6 +103,14 @@ export const NewButton = () => {
               <div className=" leading-none">New</div>
             </SidebarMenuButton>
           </DropdownMenuTrigger>
+          <input
+            ref={fileInputRef}
+            type="file"
+            // id="file-upload"
+            className="h-0 w-0"
+            hidden
+            onChange={handleFileUpload}
+          />
           <DropdownMenuContent
             className="w-(--radix-dropdown-menu-trigger-width)"
             align="start"
@@ -92,19 +122,17 @@ export const NewButton = () => {
                 onSelect={() => setSelectedVersion(item.title)}
               >
                 <item.icon />
-                {item.title}
+                {i === 1 ? (
+                  <Label htmlFor="file-upload"> {item.title}</Label>
+                ) : (
+                  item.title
+                )}
+
                 {item.title === selectedVersion && (
                   <Check className="ml-auto" />
                 )}
               </DropdownMenuItem>
             ))}
-            <input
-              ref={fileInputRef}
-              type="file"
-              // hidden
-
-              onChange={handleFileUpload}
-            />
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>
