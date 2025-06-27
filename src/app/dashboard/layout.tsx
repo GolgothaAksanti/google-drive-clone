@@ -1,3 +1,5 @@
+import { Toaster } from "sonner";
+
 import { AppSidebar } from "@/components/app-sidebar";
 import { ContextProvider } from "@/components/context-provider";
 import { CreateNewFolderModal } from "@/components/modal/create-folder-modal";
@@ -12,6 +14,7 @@ type Props = Readonly<{
 const Layout = async ({ children }: Props) => {
   return (
     <ProtectedRoute>
+      <Toaster />
       <div className="[--header-height:calc(--spacing(14))]">
         <SidebarProvider className="flex flex-col">
           <CreateNewFolderModal />

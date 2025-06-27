@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { addDoc, collection, Timestamp } from "firebase/firestore";
+import { firestore } from "firebase-admin";
 
-import { db } from "@/lib/firebase";
+import { serverDB } from "@/lib/firebase-admin";
 import cloudinary from "@/lib/cloudinary";
 import { getTokenFromHeaders } from "@/utils/get-token";
 import { verifyFirebaseToken } from "@/lib/verify-firebase-token";
@@ -12,37 +12,46 @@ export const POST = async (req: NextRequest) => {
   const file = form.get("file") as File;
   const folderId = form.get("folderId") as string;
 
-  const arrayBuffer = await file.arrayBuffer();
-  const buffer = Buffer.from(arrayBuffer);
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
 
-  const token = getTokenFromHeaders(req.headers);
-  const userId = await verifyFirebaseToken(token!);
+    const token = getTokenFromHeaders(req.headers);
+    const userId = await verifyFirebaseToken(token!);
 
-  console.dir({ token, userId, folderId });
+    console.dir({ userId });
 
-  const uploaded = await new Promise<UploadApiResponse>((resolve, reject) => {
-    cloudinary.uploader
-      .upload_stream(
-        { resource_type: "auto", folder: `drive/${userId}` },
-        (err, result) => {
-          if (err || !result) return reject(err || new Error("Upload failed"));
-          resolve(result);
-        }
-      )
-      .end(buffer);
-  });
+    const uploaded = await new Promise<UploadApiResponse>((resolve, reject) => {
+      cloudinary.uploader
+        .upload_stream(
+          { resource_type: "auto", folder: `drive/${userId}` },
+          (err, result) => {
+            if (err || !result) {
+              console.dir(err);
+              return reject(err || new Error("Upload failed"));
+            }
+            resolve(result);
+          }
+        )
+        .end(buffer);
+    });
 
-  const fileDoc = {
-    name: uploaded.original_filename,
-    url: uploaded.secure_url,
-    type: uploaded.resource_type,
-    size: uploaded.bytes,
-    ownerId: userId,
-    folderId: folderId,
-    createdAt: Timestamp.now(),
-  };
+    console.dir({ uploaded });
 
-  await addDoc(collection(db, "files"), fileDoc);
+    const fileDoc = {
+      name: uploaded.original_filename,
+      url: uploaded.secure_url,
+      type: uploaded.resource_type,
+      size: uploaded.bytes,
+      ownerId: userId,
+      folderId: folderId,
+      createdAt: firestore.Timestamp.now(),
+    };
 
-  return NextResponse.json({ success: true });
+    await serverDB.collection("files").add(fileDoc);
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.dir({ error });
+    return NextResponse.json({ error: true }, { status: 500 });
+  }
 };
