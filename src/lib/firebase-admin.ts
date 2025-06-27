@@ -1,14 +1,21 @@
 import { initializeApp, cert, getApps } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
-import { readFileSync } from "fs";
-import path from "path";
+
+// const serviceAccount = JSON.parse(
+//   readFileSync(
+//     path.join(process.cwd(), "credentials/firebase-credentials.json"),
+//     "utf-8"
+//   )
+// );
+const base64 = process.env.FIREBASE_ADMIN_CREDENTIALS_BASE64;
+
+if (!base64) {
+  throw new Error("FIREBASE_ADMIN_CREDENTIALS_BASE64 is not set in .env.local");
+}
 
 const serviceAccount = JSON.parse(
-  readFileSync(
-    path.join(process.cwd(), "credentials/firebase-credentials.json"),
-    "utf-8"
-  )
+  Buffer.from(base64, "base64").toString("utf-8")
 );
 
 const app =
