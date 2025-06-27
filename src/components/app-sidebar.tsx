@@ -1,41 +1,28 @@
 import * as React from "react";
-import { Calendar, Home, Inbox, Search, Settings } from "lucide-react";
+import {
+  // Calendar,
+  Home,
+  // Inbox, Search, Settings
+} from "lucide-react";
 
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
+import { NewButton } from "./new-button";
+import { StorageUsage } from "./storage-usage";
 
 const items = [
   {
     title: "Home",
     url: "#",
     icon: Home,
-  },
-  {
-    title: "Inbox",
-    url: "#",
-    icon: Inbox,
-  },
-  {
-    title: "Calendar",
-    url: "#",
-    icon: Calendar,
-  },
-  {
-    title: "Search",
-    url: "#",
-    icon: Search,
-  },
-  {
-    title: "Settings",
-    url: "#",
-    icon: Settings,
   },
 ];
 
@@ -48,9 +35,7 @@ export const AppSidebar = ({
       className="top-(--header-height) h-[calc(100svh-var(--header-height))]!"
     >
       <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>Google Drive clone</SidebarMenuItem>
-        </SidebarMenu>
+        <NewButton />
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>
@@ -66,6 +51,11 @@ export const AppSidebar = ({
           ))}
         </SidebarMenu>
       </SidebarContent>
+      <SidebarFooter>
+        <div className="p-1">
+          <StorageUsage />
+        </div>
+      </SidebarFooter>
       <SidebarRail />
     </Sidebar>
   );

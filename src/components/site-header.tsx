@@ -7,8 +7,10 @@ import { SearchForm } from "@/components/search-form";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useSidebar } from "@/components/ui/sidebar";
+import { ProfileBtn } from "./profile-btn";
+import { GoogleDriveIcon } from "./widgets/google-drive-icon";
 
-export function SiteHeader() {
+export const SiteHeader = () => {
   const { toggleSidebar } = useSidebar();
 
   return (
@@ -23,9 +25,20 @@ export function SiteHeader() {
           <SidebarIcon />
         </Button>
         <Separator orientation="vertical" className="mr-2 h-4" />
-        <div className="text-xl font-bold">{`Google Drive Clone`}</div>
-        <SearchForm className="w-full sm:ml-auto sm:w-auto" />
+        <div className="flex items-center justify-between w-full">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <GoogleDriveIcon />
+              <span className="text-xl font-bold">Clone</span>
+            </div>
+            <SearchForm className="w-full sm:ml-auto sm:w-auto" />
+          </div>
+
+          <div className="">
+            <ProfileBtn />
+          </div>
+        </div>
       </div>
     </header>
   );
-}
+};
